@@ -100,6 +100,7 @@ if __name__ == '__main__':
     c1 = np.linspace(max_dist1, s/3, num_iteration)
     c2 = np.linspace(max_dist2, s/3, num_iteration)
     NMSE = np.zeros(num_iteration**2)
+    count = 0
     for i in range(num_iteration):
         for k in range(num_iteration):
             for j in range(s):
@@ -112,10 +113,19 @@ if __name__ == '__main__':
                 ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[i], c2[k])
                 E1[j] = (ypredict[j] - y0) ** 2
                 E2[j] = abs(ypredict[j] - y0)
-            np.append(MSE, sum(E1)/s)
-            np.append(NMSE, sum(E2) / (s*(max(y)-min(y))))
-        #print(c[i], " ", MSE[i])
-    for i in range(num_iteration**2):
+            MSE[count] = sum(E1)/s
+            NMSE[count] = sum(E2) / (s*(max(y)-min(y)))
+            if (count == 0):
+                mse_min = MSE[count]
+            elif(MSE[count] < mse_min - 0.01):
+                mse_min = MSE[count]
+                imin = count
+                imin1 = i
+                imin2 = k
+                #print(MSE[count])
+            count+=1
+    #print(MSE[count-1])
+    """for i in range(num_iteration**2):
         if (MSE[i] == min(MSE)):
             imin = i
             if (imin < 100):
@@ -123,7 +133,7 @@ if __name__ == '__main__':
                 imin2 = imin
             else:
                 imin1 = imin//100
-                imin2 = imin%100
+                imin2 = imin%100"""
     for j in range(s):
         xi1 = x1[j]
         xwithoutj1 = delete(j, x1, s)
@@ -132,6 +142,8 @@ if __name__ == '__main__':
         y0 = y[j]
         ywithoutj = delete(j, y, s)
         ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[imin1], c2[imin2])
+        E1[j] = (ypredict[j] - y0) ** 2
+        E2[j] = abs(ypredict[j] - y0)
     #MSE_t = sum(E1) / s
     #NMSE_t = sum(E2) / (s * (max(y) - min(y)))
     points = np.zeros(s)
@@ -155,7 +167,7 @@ if __name__ == '__main__':
     print(f"Параметр2, при котором среднеквадратическая ошибка минимальна = {c2[imin2]}")
     print(f"Среднеквадратическая ошибка = {MSE[imin]}")
     print(f"Нормализованная среднеквадратическая ошибка = {NMSE[imin]}")
-    print("-----------------------------------------Тестовая выборка---------------------------------------")
+    print("--------------------------------Тестовая выборка-----------------------------------")
     for j in range(len_test):
         xi1 = x_test1[j]
         xwithoutj1 = delete(j, x_test1, len_test)
