@@ -9,10 +9,11 @@ def Y(x1, x2):
     y=np.zeros(len(x1))
     for i in range(len(x1)):
         y[i]=m.sin(x1[i]) + x2[i]/10
-        #noise = np.random.normal(0, 0.5, 1)[0]
-        #noise = np.clip(noise, -y[i]*0.05, y[i] * 0.05)
+        percent = randint(0, 5)
+        noise = np.random.normal(0, 0.5, 1)[0]
+        noise = np.clip(noise, (-y[i]*percent)/100, (y[i] * percent)/100)
         #print(y[i], " ", noise)
-        #y[i] += noise
+        y[i] += noise
     return y
 
 
@@ -70,7 +71,7 @@ def max_distance(x):
 
 if __name__ == '__main__':
 
-    s = 300
+    s = 100
     len_test = int(s * 0.2)
     x_start1 = np.zeros(s + len_test)
     x_start2 = np.zeros(s + len_test)
@@ -91,33 +92,38 @@ if __name__ == '__main__':
     ypredict_test = np.zeros(len_test)
     E1 = np.zeros(s)
     E2 = np.zeros(s)
-    num_iteration = s * 5
+    num_iteration = s
     max_dist1 = max_distance(x_start1)
     max_dist2 = max_distance(x_start2)
     #c = np.zeros(num_iteration)
-    MSE = np.zeros(num_iteration)
-    #c1 = np.linspace(1, s/3, num_iteration)
-    #c2 = np.linspace(1, s/3, num_iteration)
-    c1 = max_dist1*4
-    c2 = max_dist2*4
-    NMSE = np.zeros(num_iteration)
-    """for i in range(num_iteration):
-        for j in range(s):
-            xi1 = x1[j]
-            xwithoutj1 = delete(j, x1, s)
-            xi2 = x2[j]
-            xwithoutj2 = delete(j, x2, s)
-            y0 = y[j]
-            ywithoutj = delete(j, y, s)
-            ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[i], c2[i])
-            E1[j] = (ypredict[j] - y0) ** 2
-            E2[j] = abs(ypredict[j] - y0)
-        MSE[i] = sum(E1)/s
-        NMSE[i] = sum(E2) / (s*(max(y)-min(y)))
-        print(c[i], " ", MSE[i])"""
-    """for i in range(num_iteration):
+    MSE = np.zeros(num_iteration**2)
+    c1 = np.linspace(max_dist1, s/3, num_iteration)
+    c2 = np.linspace(max_dist2, s/3, num_iteration)
+    NMSE = np.zeros(num_iteration**2)
+    for i in range(num_iteration):
+        for k in range(num_iteration):
+            for j in range(s):
+                xi1 = x1[j]
+                xwithoutj1 = delete(j, x1, s)
+                xi2 = x2[j]
+                xwithoutj2 = delete(j, x2, s)
+                y0 = y[j]
+                ywithoutj = delete(j, y, s)
+                ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[i], c2[k])
+                E1[j] = (ypredict[j] - y0) ** 2
+                E2[j] = abs(ypredict[j] - y0)
+            np.append(MSE, sum(E1)/s)
+            np.append(NMSE, sum(E2) / (s*(max(y)-min(y))))
+        #print(c[i], " ", MSE[i])
+    for i in range(num_iteration**2):
         if (MSE[i] == min(MSE)):
-            imin = i"""
+            imin = i
+            if (imin < 100):
+                imin1 = 0
+                imin2 = imin
+            else:
+                imin1 = imin//100
+                imin2 = imin%100
     for j in range(s):
         xi1 = x1[j]
         xwithoutj1 = delete(j, x1, s)
@@ -125,11 +131,9 @@ if __name__ == '__main__':
         xwithoutj2 = delete(j, x2, s)
         y0 = y[j]
         ywithoutj = delete(j, y, s)
-        ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1, c2)
-        E1[j] = (ypredict[j] - y0) ** 2
-        E2[j] = abs(ypredict[j] - y0)
-    MSE_t = sum(E1) / s
-    NMSE_t = sum(E2) / (s * (max(y) - min(y)))
+        ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[imin1], c2[imin2])
+    #MSE_t = sum(E1) / s
+    #NMSE_t = sum(E2) / (s * (max(y) - min(y)))
     points = np.zeros(s)
     for i in range(s):
         points[i] = i+1
@@ -143,17 +147,14 @@ if __name__ == '__main__':
     plt.ylabel("Yi")
     plt.legend()
     plt.show()
-    """plt.plot(c1, MSE)
-    plt.xlabel("c1")
-    plt.ylabel("W(c)")
-    plt.plot(c2, MSE)
-    plt.xlabel("c2")
-    plt.ylabel("W(c)")
-    plt.show()"""
-    print(f"Параметр1, при котором среднеквадратическая ошибка минимальна = {c1}")
-    print(f"Параметр2, при котором среднеквадратическая ошибка минимальна = {c2}")
-    print(f"Среднеквадратическая ошибка = {MSE_t}")
-    print(f"Нормализованная среднеквадратическая ошибка = {NMSE_t}")
+    #plt.plot(points, MSE)
+    #plt.xlabel("i")
+    #plt.ylabel("MSE")
+    #plt.show()
+    print(f"Параметр1, при котором среднеквадратическая ошибка минимальна = {c1[imin1]}")
+    print(f"Параметр2, при котором среднеквадратическая ошибка минимальна = {c2[imin2]}")
+    print(f"Среднеквадратическая ошибка = {MSE[imin]}")
+    print(f"Нормализованная среднеквадратическая ошибка = {NMSE[imin]}")
     print("-----------------------------------------Тестовая выборка---------------------------------------")
     for j in range(len_test):
         xi1 = x_test1[j]
@@ -162,7 +163,7 @@ if __name__ == '__main__':
         xwithoutj2 = delete(j, x_test2, len_test)
         y0 = y_test[j]
         ywithoutj = delete(j, y_test, len_test)
-        ypredict_test[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1, c2)
+        ypredict_test[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[imin1], c2[imin2])
         E1[j] = (ypredict_test[j] - y0) ** 2
         E2[j] = abs(ypredict_test[j] - y0)
     MSE_test = sum(E1) / len_test
@@ -176,7 +177,6 @@ if __name__ == '__main__':
     plt.ylabel("Yi_test")
     plt.legend()
     plt.show()
-#сделать так, чтобы тестовая и обучающая выборка генерировалась в одном месте, иначе
-# максимальное растояние между точками различается и выпадает в ноль
+
 
 
