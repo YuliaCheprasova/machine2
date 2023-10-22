@@ -1,8 +1,8 @@
-
 import numpy as np
 import math as m
 from random import randint
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def Y(x1, x2):
@@ -12,7 +12,6 @@ def Y(x1, x2):
         percent = randint(0, 5)
         noise = np.random.normal(0, 0.5, 1)[0]
         noise = np.clip(noise, (-y[i]*percent)/100, (y[i] * percent)/100)
-        #print(y[i], " ", noise)
         y[i] += noise
     return y
 
@@ -92,15 +91,13 @@ if __name__ == '__main__':
     ypredict_test = np.zeros(len_test)
     E1 = np.zeros(s)
     E2 = np.zeros(s)
-    num_iteration = s
+    num_iteration = s//3
     max_dist1 = max_distance(x_start1)
     max_dist2 = max_distance(x_start2)
-    #c = np.zeros(num_iteration)
-    MSE = np.zeros(num_iteration**2)
+    MSE = np.zeros((num_iteration, num_iteration))
     c1 = np.linspace(max_dist1, s/3, num_iteration)
     c2 = np.linspace(max_dist2, s/3, num_iteration)
-    NMSE = np.zeros(num_iteration**2)
-    count = 0
+    NMSE = np.zeros((num_iteration, num_iteration))
     for i in range(num_iteration):
         for k in range(num_iteration):
             for j in range(s):
@@ -113,27 +110,23 @@ if __name__ == '__main__':
                 ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[i], c2[k])
                 E1[j] = (ypredict[j] - y0) ** 2
                 E2[j] = abs(ypredict[j] - y0)
-            MSE[count] = sum(E1)/s
-            NMSE[count] = sum(E2) / (s*(max(y)-min(y)))
-            if (count == 0):
-                mse_min = MSE[count]
-            elif(MSE[count] < mse_min - 0.01):
-                mse_min = MSE[count]
-                imin = count
+            MSE[i][k] = sum(E1)/s
+            NMSE[i][k] = sum(E2) / (s*(max(y)-min(y)))
+            if ((i == 0) and (k == 0)):
+                mse_min = MSE[i][k]
+            elif(MSE[i][k] < mse_min - 0.01):
+                mse_min = MSE[i][k]
                 imin1 = i
                 imin2 = k
-                #print(MSE[count])
-            count+=1
-    #print(MSE[count-1])
-    """for i in range(num_iteration**2):
-        if (MSE[i] == min(MSE)):
-            imin = i
-            if (imin < 100):
-                imin1 = 0
-                imin2 = imin
-            else:
-                imin1 = imin//100
-                imin2 = imin%100"""
+        print(i)
+    C1, C2 = np.meshgrid(c1, c2)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(C1, C2, MSE, cmap='viridis')
+    ax.set_xlabel('c1')
+    ax.set_ylabel('c2')
+    ax.set_zlabel('MSE')
+    plt.show()
     for j in range(s):
         xi1 = x1[j]
         xwithoutj1 = delete(j, x1, s)
@@ -144,29 +137,23 @@ if __name__ == '__main__':
         ypredict[j] = M(xi1, xi2, xwithoutj1, xwithoutj2, ywithoutj, c1[imin1], c2[imin2])
         E1[j] = (ypredict[j] - y0) ** 2
         E2[j] = abs(ypredict[j] - y0)
-    #MSE_t = sum(E1) / s
-    #NMSE_t = sum(E2) / (s * (max(y) - min(y)))
     points = np.zeros(s)
     for i in range(s):
         points[i] = i+1
     points_test = np.zeros(len_test)
     for i in range(len_test):
         points_test[i] = i+1
-    plt.plot(points, y_true, label="истинные значения")
+    plt.plot(y_true, label="истинные значения")
     plt.scatter(points, y, label="значения с шумом")
-    plt.plot(points, ypredict, label = "предсказанные значения")
+    plt.plot(ypredict, label = "предсказанные значения")
     plt.xlabel("i")
     plt.ylabel("Yi")
     plt.legend()
     plt.show()
-    #plt.plot(points, MSE)
-    #plt.xlabel("i")
-    #plt.ylabel("MSE")
-    #plt.show()
     print(f"Параметр1, при котором среднеквадратическая ошибка минимальна = {c1[imin1]}")
     print(f"Параметр2, при котором среднеквадратическая ошибка минимальна = {c2[imin2]}")
-    print(f"Среднеквадратическая ошибка = {MSE[imin]}")
-    print(f"Нормализованная среднеквадратическая ошибка = {NMSE[imin]}")
+    print(f"Среднеквадратическая ошибка = {MSE[imin1][imin2]}")
+    print(f"Нормализованная среднеквадратическая ошибка = {NMSE[imin1][imin2]}")
     print("--------------------------------Тестовая выборка-----------------------------------")
     for j in range(len_test):
         xi1 = x_test1[j]
@@ -182,9 +169,9 @@ if __name__ == '__main__':
     NMSE_test = sum(E2) / (len_test * (max(y_test) - min(y_test)))
     print(f"Среднеквадратическая ошибка при тесте = {MSE_test}")
     print(f"Нормализованная среднеквадратическая ошибка при тесте = {NMSE_test}")
-    plt.plot(points_test, y_true_test, label="истинные значения")
+    plt.plot(y_true_test, label="истинные значения")
     plt.scatter(points_test, y_test, label="значения с шумом")
-    plt.plot(points_test, ypredict_test, label="предсказанные значения")
+    plt.plot(ypredict_test, label="предсказанные значения")
     plt.xlabel("i_test")
     plt.ylabel("Yi_test")
     plt.legend()
